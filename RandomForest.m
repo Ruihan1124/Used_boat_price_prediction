@@ -1,5 +1,6 @@
 load Output
-load input1
+load Input
+isCategorical = [zeros(10,1);ones(size(Input,2)-10,1)];
 %% Number of Leaves and Trees Optimization
 %for RFOptimizationNum=1:5
     
@@ -7,7 +8,7 @@ load input1
 % col='rgbcmyk';
 % figure('Name','RF Leaves and Trees');
 % for i=1:length(RFLeaf)
-%     RFModel=TreeBagger(2000,Input,Output,'Method','R','OOBPrediction','On','MinLeafSize',RFLeaf(i));
+%     RFModel=TreeBagger(2000,Input,Output,'Method','R','OOBPrediction','On','CategoricalPredictors',find(isCategorical == 1),'MinLeafSize',RFLeaf(i));
 %     plot(oobError(RFModel),col(i));
 %     hold on
 % end
@@ -27,7 +28,7 @@ load input1
 RFScheduleBar=waitbar(0,'Random Forest is Solving...');
 RFRMSEMatrix=[];
 RFrAllMatrix=[];
-RFRunNumSet=20;
+RFRunNumSet=500;
 for RFCycleRun=1:RFRunNumSet
 
 %% Training Set and Test Set Division
@@ -50,7 +51,7 @@ TrainVARI(all(TrainVARI==0,2),:)=[];
 nTree=127;
 nLeaf=5;
 RFModel=TreeBagger(nTree,TrainVARI,TrainYield,...
-    'Method','regression','OOBPredictorImportance','on', 'MinLeafSize',nLeaf);
+    'Method','regression','OOBPredictorImportance','on','CategoricalPredictors',find(isCategorical == 1), 'MinLeafSize',nLeaf);
 [RFPredictYield,RFPredictConfidenceInterval]=predict(RFModel,TestVARI);
 % PredictBC107=cellfun(@str2num,PredictBC107(1:end));
 
@@ -94,8 +95,18 @@ set(gca, 'XDir','normal')
 xlabel('Factor');
 ylabel('Importance');
 
+yHat = oobPredict(RFModel);
+R2 = corr(RFModel.Y,yHat)
+r2=corr(RFModel.Y,yHat)^2
+
+Use2=[RFModel.Y,yHat]
+
+figure
+plot(Use2)
+hold on
+
 %% RF Model Storage
-RFModelSavePath='E:\';
+RFModelSavePath='D:\';
 save(sprintf('%sRF04.mat',RFModelSavePath),'nLeaf','nTree',...
     'RandomNumber','RFModel','RFPredictConfidenceInterval','RFPredictYield','RFr','RFRMSE',...
     'TestVARI','TestYield','TrainVARI','TrainYield');
